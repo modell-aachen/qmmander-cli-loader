@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -o pipefail -o noclobber -o nounset
 
 get-qmmander() {
@@ -6,31 +6,14 @@ get-qmmander() {
     _UPDATE_INSTALLATION=false
     _QMMANDER_HOME=/opt/qmannder
 
-    _configure_path() {
-        shell_profiles=()
-        # check existing profiles
-        [ -f "$HOME/.bashrc" ] && shell_profiles+=("$HOME/.bashrc")
-        [ -f "$HOME/.zshrc" ] && shell_profiles+=("$HOME/.zshrc")
-
-        # line to append to each profile
-        lineToCheck="export PATH=${_QMMANDER_HOME}:\$PATH"
-
-        for p in "${shell_profiles[@]}"; do
-            # check if line exists in profile or append
-            grep -qxF "$lineToCheck" "$p" || echo "$lineToCheck" >> "$p"
-        done
-    } 
-
     _install_or_update() {
         [ ! -d "${_QMMANDER_HOME}" ] && mkdir "${_QMMANDER_HOME}";
-
-        _configure_path       
 
         if [ -d "${_QMMANDER_HOME}" ]; then
             rm -rf "${_QMMANDER_HOME:?}/*" # prevent expansion to /*
             tar -xf "${1}" -C "${_QMMANDER_HOME}"
             chmod +x "${_QMMANDER_HOME}/qmmander.sh"
-            mv "${_QMMANDER_HOME}/qmmander.sh" "${_QMMANDER_HOME}/qmmander"
+            ln -s "${_QMMANDER_HOME}/qmmander.sh" /usr/local/bin/qmmander
         else
             printf "Unable to create qammnder home, please check permissions.\n"
         fi
