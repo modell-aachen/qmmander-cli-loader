@@ -1,22 +1,38 @@
 #!/bin/bash
-set -o errexit -o pipefail -o noclobber -o nounset
+set -o pipefail -o noclobber -o nounset
 
 get-qmmander() {
-    IS_VERBOSE=false
-
+    _IS_VERBOSE=false
+    _UPDATE_INSTALLATION=false
     _QMMANDER_HOME=/opt/qmannder
+
+    _configure_path() {
+        shell_profiles=()
+        # check existing profiles
+        [ -f "$HOME/.bashrc" ] && shell_profiles+=("$HOME/.bashrc")
+        [ -f "$HOME/.zshrc" ] && shell_profiles+=("$HOME/.zshrc")
+
+        # line to append to each profile
+        lineToCheck="export PATH=${_QMMANDER_HOME}:\$PATH"
+
+        for p in "${shell_profiles[@]}"; do
+            # check if line exists in profile or append
+            grep -qxF "$lineToCheck" "$p" || echo "$lineToCheck" >> "$p"
+        done
+    } 
 
     _install_or_update() {
         [ ! -d "${_QMMANDER_HOME}" ] && mkdir "${_QMMANDER_HOME}";
+
+        _configure_path       
 
         if [ -d "${_QMMANDER_HOME}" ]; then
             rm -rf "${_QMMANDER_HOME:?}/*" # prevent expansion to /*
             tar -xf "${1}" -C "${_QMMANDER_HOME}"
             chmod +x "${_QMMANDER_HOME}/qmmander.sh"
-
-            ln -s "${_QMMANDER_HOME}/qmmander.sh" /usr/local/bin/qmmander
+            mv "${_QMMANDER_HOME}/qmmander.sh" "${_QMMANDER_HOME}/qmmander"
         else
-            printf "Unable to create qammnder home, please check permissions."
+            printf "Unable to create qammnder home, please check permissions.\n"
         fi
     }
 
@@ -32,7 +48,7 @@ get-qmmander() {
     }
 
     OPTS=$(getopt -o vduhr: --long verbose,debug,help,update,release-tag: -- "$@")
-    if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
+    if [ $? != 0 ] ; then echo "Failed parsing options.\n" >&2 ; exit 1 ; fi
 
     eval set -- "$OPTS"
 
@@ -42,10 +58,10 @@ get-qmmander() {
                 IS_VERBOSE=true
                 shift ;;
             -u | --update )
-                UPDATE_USR_BIN=true
+                _UPDATE_INSTALLATION=true
                 shift ;;
             -r | --release-tag )
-                RELEASE=$2
+                _RELEASE=$2
                 shift 2 ;;
             -h | --help )
                 usage
@@ -59,44 +75,46 @@ get-qmmander() {
         esac
     done
 
-    if [ -z "${NEXUS_BOT_TOKEN:''}" ]; then
+    if [ -z "${NEXUS_BOT_TOKEN:-}" ]; then
         printf "Missing env NEXUS_BOT_TOKEN. The nexus bot token is required, please insert:\n"
         read -r TOKEN
         if [ -z "$TOKEN" ]; then
+            echo "[ERROR] supplied token was empty."
             exit 1
         fi
     else
         TOKEN="$NEXUS_BOT_TOKEN"
     fi
 
-    if [ -z "${RELEASE:''}" ]; then
+    if [ -z "${_RELEASE:-}" ]; then
         printf "Missing release version. The release version to be installed is required, plase insert:\n"
         read -r RELEASE
-        if [ -z "$RELEASE" ]; then
+        if [ -z "$_RELEASE" ]; then
+            echo "[ERROR] supplied release was empty."
             exit 1
         fi
     fi
 
     qmmanderDestionationPath="/tmp/qmmander-$(date +%s).tar.gz"
-    cmd=$(curl -s -f -u "bot-ro:${TOKEN}" \
-        "https://nexus.modac.cloud/repository/qwiki-raw-private/qmmander-cli/${RELEASE}/qmannder.tar.gz" \
-        --output "$qmmanderDestionationPath")
+    qmmanderUrl="https://nexus.modac.cloud/repository/qwiki-raw-private/qmmander-cli/${_RELEASE}/qmmander.tar.gz"
 
-    if [[ "$cmd" -ne "0" ]]; then
-        printf "\n[ERROR] NEXUS_BOT_TOKEN or RELEASE version invalid. Unable to fetch qmmander cli.\n"
+    curl -s -f -u "bot-ro:${TOKEN}" "$qmmanderUrl" --output "$qmmanderDestionationPath"
+
+    if [ "$?" != 0 ]; then
+        printf "[ERROR] NEXUS_BOT_TOKEN or RELEASE version invalid. Unable to fetch qmmander cli form $qmmanderUrl\n"
         exit 1
     fi
 
     unset TOKEN RELEASE
 
-    if [ -n "$UPDATE_USR_BIN" ]; then
-        $IS_VERBOSE && printf "replacing current installation of qmmander\n"
+    if [ -n "${_UPDATE_INSTALLATION:-}" ]; then
+        $_IS_VERBOSE && printf "replacing current installation of qmmander\n"
         _install_or_update "$qmmanderDestionationPath";
     else
-        $IS_VERBOSE && printf "Update flag not set, not replacing qmmander\n"
+        $_IS_VERBOSE && printf "Update flag not set, not replacing qmmander\n"
     fi
 
-    printf "\ndone\n"
+    printf "Done.\n"
 
 }
 
