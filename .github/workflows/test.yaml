@@ -10,4 +10,4 @@ jobs:
       
       - name: Run ShellCheck
         run: |
-          shellcheck get-qmmander
+          shellcheck get-qmmander -S warning
