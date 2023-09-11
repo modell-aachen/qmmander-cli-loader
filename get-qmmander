@@ -1,0 +1,111 @@
+#!/bin/bash
+
+
+get-qmmander() {
+    IS_VERBOSE=false
+
+    _QMMANDER_HOME=/opt/qmannder
+
+    _add_path_to_environment() {
+        grep -qxF 'export PATH=$PATH:$_QMMANDER_HOME/' foo.bar || echo 'include "/configs/projectname.conf"' >> foo.bar
+    }
+
+    _install_or_update() {
+        if [ ! -d $_QMMANDER_HOME ] && mkdir $_QMMANDER_HOME
+
+        if [ -d $_QMMANDER_HOME ]; then
+            rm -rf $_QMMANDER_HOME/*
+            tar -xf $1 -C $_QMMANDER_HOME
+            chmod +x $_QMMANDER_HOME/qmmander.sh
+
+            ln -s $_QMMANDER_HOME/qmmander.sh /usr/local/bin/qmmander
+        else
+            printf "Unable to create qammnder home, please check permissions."
+        fi
+    }
+
+
+    usage() {
+        printf -v text "%s" \
+            "get-qmmander downloads qmmander-cli to the current directory; ask for the nexus bot token if NEXUS_BOT_TOKEN is not set as environmental variable [OPTION...]\n" \
+            "    -v, --verbose        shows more info\n" \
+            "    -d, --debug          debug API calls by passing verbose flag to curl\n" \
+            "    -u, --update         updates qmmander cli" \
+            "    -h, --help           shows this help message\n" \
+            "    -r, --release-tag    cli release tag, e.g. 0.1.12, default: latest\n"
+        printf "$text"
+    }
+
+    OPTS=`getopt -o vduhr: --long verbose,debug,help,update,release-tag: -- "$@"`
+    if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
+
+    eval set -- "$OPTS"
+
+    while true; do
+        case "$1" in
+            -v | --verbose )
+                IS_VERBOSE=true
+                shift ;;
+            -d | --debug )
+                DEBUG=true
+                shift ;;
+            -u | --update )
+                UPDATE_USR_BIN=true
+                shift ;;
+            -r | --release-tag )
+                RELEASE=$2
+                shift 2 ;;
+            -h | --help )
+                usage
+                return
+                shift ;;
+            -- )
+                shift
+                break ;;
+            * )
+                break ;;
+        esac
+    done
+
+    if [ -z "$NEXUS_BOT_TOKEN" ]; then
+        printf "The nexus bot token is required, please insert\n"
+        read TOKEN
+        if [ -z "$TOKEN" ]; then
+            exit 1
+        fi
+    else
+        TOKEN="$NEXUS_BOT_TOKEN"
+    fi
+
+    if [ -z "$RELEASE" ]; then
+        printf "The release version to be installed is required, please insert\n"
+        read RELEASE
+        if [ -z "$RELEASE" ]; then
+            exit 1
+        fi
+    fi
+
+    $qmmanderDestionationPath = "/tmp/qmmander-$(date +%s).tar.gz"
+    curl -s -f -u bot-ro:${TOKEN} \
+        "https://nexus.modac.cloud/repository/qwiki-raw-private/qmmander-cli/${RELEASE}/qmannder.tar.gz" \
+        --output $qmmanderDestionationPath
+
+    if [[ "$?" -ne "0" ]]; then
+        printf "\n[ERROR] NEXUS_BOT_TOKEN or RELEASE version invalid. Unable to fetch qmmander cli.\n"
+        exit 1
+    fi
+
+    unset TOKEN RELEASE
+
+    if [ ! -z "$UPDATE_USR_BIN" ]; then
+        $IS_VERBOSE && printf "replacing current installation of qmmander in $_QMMANDER_HOME\n"
+        _install_or_update $qmmanderDestionationPath;
+    else
+        $IS_VERBOSE && printf "Update flag not set, not replacing qmmander in $_QMMANDER_HOME\n"
+    fi
+
+    printf "\ndone\n"
+
+}
+
+get-qmmander $@

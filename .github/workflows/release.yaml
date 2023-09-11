@@ -1,0 +1,23 @@
+name: Release get-qmmander
+on:
+  push:
+    tags:
+      - "*"
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get the current tag
+      id: get_tag
+      shell: bash
+      run: echo ::set-output name=TAG::${GITHUB_REF/refs\/tags\//}
+
+    - name: Release CLI on GitHub
+      uses: softprops/action-gh-release@v0.1.14
+      with:
+        name: "get-qmmander release ${{ steps.get_tag.outputs.TAG }}"
+        files: |
+          ./get-qmmander
+        token: ${{ secrets.BOT_BENDER_TOKEN }}
