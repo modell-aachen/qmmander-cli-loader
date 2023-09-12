@@ -20,8 +20,8 @@ get-qmmander() {
             tar -xf "${1}" -C "${_QMMANDER_HOME}"
             chmod +x "${_QMMANDER_HOME}/qmmander.sh"
 
-            [ -e /usr/local/bin/qmmander ] && rm /usr/local/bin/qmmander
-            ln -s "${_QMMANDER_HOME}/qmmander.sh" /usr/local/bin/qmmander
+            [ -e /usr/bin/qmmander ] && rm /usr/bin/qmmander
+            ln -s "${_QMMANDER_HOME}/qmmander.sh" /usr/bin/qmmander
         else
             printf "[ERROR] Unable to create qammnder home, please check permissions.\n"
         fi
