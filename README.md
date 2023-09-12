@@ -10,10 +10,11 @@ Pass environment variable RELEASE to specifiy qmmander-version, if nessecary.
 
 ## help ./get-qmmander --help
 ```Bash
-get-qmmander downloads qwiki-cli to the current directory; asks for the nexus bot token if NEXUS_BOT_TOKEN is not set as environmental variable [OPTION...]
-    -v, --verbose        shows more info
-    -d, --debug          debug API calls by passing verbose flag to curl
-    -u, --update         update cli binary in /usr/bin/
+get-qmmander downloads qmmander relesase to /tmp, ask for the nexus bot token and release version
+environmental variables NEXUS_BOT_TOKEN and/or RELEASE are unset. Installs qmmander to /opt/qmmander [OPTION...]
+
+get-qmmander [OPTIONS]
+    -u, --update         updates qmmander cli
     -h, --help           shows this help message
     -r, --release-tag    cli release tag, e.g. 0.1.12, default: latest
  ```
