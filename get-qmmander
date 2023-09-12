@@ -71,7 +71,7 @@ get-qmmander() {
 
     if [ -z "${_RELEASE:-}" ]; then
         printf "Missing release version. The release version to be installed is required, plase insert:\n"
-        read -r RELEASE
+        read -r _RELEASE
         if [ -z "$_RELEASE" ]; then
             echo "[ERROR] supplied release was empty."
             exit 1
