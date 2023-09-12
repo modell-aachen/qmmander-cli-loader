@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+set -o pipefail -o noclobber -o nounset
+
+if [ "$EUID" -ne 0 ]
+    then echo "[ERROR] get-commander needs to be executed as root"
+    exit
+fi
+
+get-qmmander() {
+    _IS_VERBOSE=false
+    _DRY_RUN=${DRY_RUN:-false}
+    _QMMANDER_HOME=/opt/qmmander
+    _RELEASE=${RELEASE:-}
+
+    _install_or_update() {
+        [ ! -d "${_QMMANDER_HOME}" ] && mkdir "${_QMMANDER_HOME}";
+
+        if [ -d "${_QMMANDER_HOME}" ]; then
+            rm -rf "${_QMMANDER_HOME:?}/*" # prevent expansion to /*
+            tar -xf "${1}" -C "${_QMMANDER_HOME}"
+            chmod +x "${_QMMANDER_HOME}/qmmander.sh"
+
+            [ -e /usr/local/bin/qmmander ] && rm /usr/local/bin/qmmander
+            ln -s "${_QMMANDER_HOME}/qmmander.sh" /usr/local/bin/qmmander
+        else
+            printf "[ERROR] Unable to create qammnder home, please check permissions.\n"
+        fi
+    }
+
+
+    usage() {
+        printf -v text "%s" \
+            "get-qmmander downloads qmmander relesase to /tmp, ask for the nexus bot token and release version \n"\
+            "environmental variables NEXUS_BOT_TOKEN and/or RELEASE are unset. Installs qmmander to ${_QMMANDER_HOME} [OPTION...]\n\n" \
+            "get-qmmander [OPTIONS]\n"\
+            "    -u, --update         updates qmmander cli \n" \
+            "    -h, --help           shows this help message\n" \
+            "    -r, --release-tag    cli release tag, e.g. 0.1.12, default: latest\n"
+        echo -e "$text"
+    }
+
+    OPTS=$(getopt -o vduhr: --long verbose,debug,help,update,release-tag: -- "$@")
+    if [ $? != 0 ] ; then echo "[ERROR] Failed parsing options.\n" >&2 ; exit 1 ; fi
+
+    eval set -- "$OPTS"
+
+    while true; do
+        case "$1" in
+            -u | --update )
+                _DRY_RUN=true
+                shift ;;
+            -r | --release-tag )
+                _RELEASE=$2
+                shift 2 ;;
+            -h | --help )
+                usage
+                return
+                ;;
+            -- )
+                shift
+                break ;;
+            * )
+                break ;;
+        esac
+    done
+
+    if [ -z "${NEXUS_BOT_TOKEN:-}" ]; then
+        printf "[WARN] Missing env NEXUS_BOT_TOKEN. The nexus bot token is required, please insert:\n"
+        read -r TOKEN
+        if [ -z "$TOKEN" ]; then
+            echo "[ERROR] supplied token was empty. Please set environment variable NEXUS_BOT_TOKEN"
+            exit 1
+        fi
+    else
+        TOKEN="$NEXUS_BOT_TOKEN"
+    fi
+
+    if [ -z "${_RELEASE:-}" ]; then
+        printf "[WARN] Missing release version. The release version to be installed is required, plase insert:\n"
+        read -r _RELEASE
+        if [ -z "$_RELEASE" ]; then
+            echo "[ERROR] Supplied release was empty. Please set environment variable RELEASE"
+            exit 1
+        fi
+    fi
+
+    qmmanderDestionationPath="/tmp/qmmander-$(date +%s).tar.gz"
+    qmmanderUrl="https://nexus.modac.cloud/repository/qwiki-raw-private/qmmander-cli/${_RELEASE}/qmmander.tar.gz"
+
+    curl -s -f -u "bot-ro:${TOKEN}" "$qmmanderUrl" --output "$qmmanderDestionationPath"
+
+    if [ "$?" != 0 ]; then
+        printf "[ERROR] NEXUS_BOT_TOKEN or RELEASE version invalid. Unable to fetch qmmander cli form $qmmanderUrl\n"
+        exit 1
+    fi
+
+    unset TOKEN RELEASE
+
+    if [ -n "${_DRY_RUN:-}" ]; then
+        printf "[INFO] Replacing current installation of qmmander\n"
+        _install_or_update "$qmmanderDestionationPath";
+    else
+        printf "[INFO] Dry-run flag set, not replacing qmmander\n"
+    fi
+
+    printf "[INFO] Finished.\n"
+    printf "[INFO] qmmander was installed/updated to ${_QMMANDER_HOME}.\n\n[INFO] Run 'qmmander' for further instructions.\n"
+
+}
+
+get-qmmander "$@"
