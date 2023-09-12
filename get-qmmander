@@ -30,8 +30,8 @@ get-qmmander() {
 
     usage() {
         printf -v text "%s" \
-            "get-qmmander downloads qmmander relesase to /tmp, ask for the nexus bot token if NEXUS_BOT_TOKEN \n"\
-            "is not set as environmental variable and installs qmmander to /opt/qmannder [OPTION...]\n\n" \
+            "get-qmmander downloads qmmander relesase to /tmp, ask for the nexus bot token and release version \n"\
+            "environmental variables NEXUS_BOT_TOKEN and/or RELEASE are unset. Installs qmmander to ${_QMMANDER_HOME} [OPTION...]\n\n" \
             "get-qmmander [OPTIONS]\n"\
             "    -u, --update         updates qmmander cli \n" \
             "    -h, --help           shows this help message\n" \
@@ -68,7 +68,7 @@ get-qmmander() {
         printf "[WARN] Missing env NEXUS_BOT_TOKEN. The nexus bot token is required, please insert:\n"
         read -r TOKEN
         if [ -z "$TOKEN" ]; then
-            echo "[ERROR] supplied token was empty."
+            echo "[ERROR] supplied token was empty. Please set environment variable NEXUS_BOT_TOKEN"
             exit 1
         fi
     else
@@ -79,7 +79,7 @@ get-qmmander() {
         printf "[WARN] Missing release version. The release version to be installed is required, plase insert:\n"
         read -r _RELEASE
         if [ -z "$_RELEASE" ]; then
-            echo "[ERROR] supplied release was empty."
+            echo "[ERROR] Supplied release was empty. Please set environment variable RELEASE"
             exit 1
         fi
     fi
@@ -104,7 +104,7 @@ get-qmmander() {
     fi
 
     printf "[INFO] Finished.\n"
-    printf "[INFO] qmmander was installed/updated to /opt/qmmander.\n\n[INFO] Run 'qmmander' for further instructions.\n"
+    printf "[INFO] qmmander was installed/updated to ${_QMMANDER_HOME}.\n\n[INFO] Run 'qmmander' for further instructions.\n"
 
 }
 
