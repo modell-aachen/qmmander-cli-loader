@@ -23,7 +23,9 @@ get-qmmander() {
 
     usage() {
         printf -v text "%s" \
-            "get-qmmander downloads qmmander-cli to the current directory; ask for the nexus bot token if NEXUS_BOT_TOKEN is not set as environmental variable [OPTION...]\n" \
+            "get-qmmander downloads qmmander relesase to /tmp, ask for the nexus bot token if NEXUS_BOT_TOKEN \n"\
+            "is not set as environmental variable and installs qmmander to /opt/qmannder [OPTION...]\n\n" \
+            "get-qmmander [OPTIONS]\n"
             "    -v, --verbose        shows more info\n" \
             "    -u, --update         updates qmmander cli \n" \
             "    -h, --help           shows this help message\n" \
