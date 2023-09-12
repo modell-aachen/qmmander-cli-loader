@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 set -o pipefail -o noclobber -o nounset
 
+if [ "$EUID" -ne 0 ]
+    then echo "[ERROR] get-commander needs to be executed as root"
+    exit
+fi
+
 get-qmmander() {
     _IS_VERBOSE=false
-    _UPDATE_INSTALLATION=false
+    _DRY_RUN=${DRY_RUN:-false}
     _QMMANDER_HOME=/opt/qmmander
-    _RELEASE=latest
+    _RELEASE=${RELEASE:-}
 
     _install_or_update() {
         [ ! -d "${_QMMANDER_HOME}" ] && mkdir "${_QMMANDER_HOME}";
@@ -14,9 +19,11 @@ get-qmmander() {
             rm -rf "${_QMMANDER_HOME:?}/*" # prevent expansion to /*
             tar -xf "${1}" -C "${_QMMANDER_HOME}"
             chmod +x "${_QMMANDER_HOME}/qmmander.sh"
+
+            [ -e /usr/local/bin/qmmander ] && rm /usr/local/bin/qmmander
             ln -s "${_QMMANDER_HOME}/qmmander.sh" /usr/local/bin/qmmander
         else
-            printf "Unable to create qammnder home, please check permissions.\n"
+            printf "[ERROR] Unable to create qammnder home, please check permissions.\n"
         fi
     }
 
@@ -25,8 +32,7 @@ get-qmmander() {
         printf -v text "%s" \
             "get-qmmander downloads qmmander relesase to /tmp, ask for the nexus bot token if NEXUS_BOT_TOKEN \n"\
             "is not set as environmental variable and installs qmmander to /opt/qmannder [OPTION...]\n\n" \
-            "get-qmmander [OPTIONS]\n"
-            "    -v, --verbose        shows more info\n" \
+            "get-qmmander [OPTIONS]\n"\
             "    -u, --update         updates qmmander cli \n" \
             "    -h, --help           shows this help message\n" \
             "    -r, --release-tag    cli release tag, e.g. 0.1.12, default: latest\n"
@@ -34,17 +40,14 @@ get-qmmander() {
     }
 
     OPTS=$(getopt -o vduhr: --long verbose,debug,help,update,release-tag: -- "$@")
-    if [ $? != 0 ] ; then echo "Failed parsing options.\n" >&2 ; exit 1 ; fi
+    if [ $? != 0 ] ; then echo "[ERROR] Failed parsing options.\n" >&2 ; exit 1 ; fi
 
     eval set -- "$OPTS"
 
     while true; do
         case "$1" in
-            -v | --verbose )
-                IS_VERBOSE=true
-                shift ;;
             -u | --update )
-                _UPDATE_INSTALLATION=true
+                _DRY_RUN=true
                 shift ;;
             -r | --release-tag )
                 _RELEASE=$2
@@ -62,7 +65,7 @@ get-qmmander() {
     done
 
     if [ -z "${NEXUS_BOT_TOKEN:-}" ]; then
-        printf "Missing env NEXUS_BOT_TOKEN. The nexus bot token is required, please insert:\n"
+        printf "[WARN] Missing env NEXUS_BOT_TOKEN. The nexus bot token is required, please insert:\n"
         read -r TOKEN
         if [ -z "$TOKEN" ]; then
             echo "[ERROR] supplied token was empty."
@@ -73,7 +76,7 @@ get-qmmander() {
     fi
 
     if [ -z "${_RELEASE:-}" ]; then
-        printf "Missing release version. The release version to be installed is required, plase insert:\n"
+        printf "[WARN] Missing release version. The release version to be installed is required, plase insert:\n"
         read -r _RELEASE
         if [ -z "$_RELEASE" ]; then
             echo "[ERROR] supplied release was empty."
@@ -93,14 +96,15 @@ get-qmmander() {
 
     unset TOKEN RELEASE
 
-    if [ -n "${_UPDATE_INSTALLATION:-}" ]; then
-        $_IS_VERBOSE && printf "replacing current installation of qmmander\n"
+    if [ -n "${_DRY_RUN:-}" ]; then
+        printf "[INFO] Replacing current installation of qmmander\n"
         _install_or_update "$qmmanderDestionationPath";
     else
-        $_IS_VERBOSE && printf "Update flag not set, not replacing qmmander\n"
+        printf "[INFO] Dry-run flag set, not replacing qmmander\n"
     fi
 
-    printf "Done.\n"
+    printf "[INFO] Finished.\n"
+    printf "[INFO] qmmander was installed/updated to /opt/qmmander.\n\n[INFO] Run 'qmmander' for further instructions.\n"
 
 }
 

@@ -21,3 +21,10 @@ jobs:
         files: |
           ./get-qmmander
         token: ${{ secrets.BOT_BENDER_TOKEN }}
+
+    - name: Relase qmmander on Nexus
+      run: |
+        make -s publish \
+          version=${{ steps.get_tag.outputs.TAG }} \
+          nexus_user=${{ secrets.NEXUS_BOT_USER }} \
+          nexus_password=${{ secrets.NEXUS_BOT_PASSWORD }}
