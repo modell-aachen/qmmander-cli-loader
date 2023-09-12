@@ -4,7 +4,8 @@ set -o pipefail -o noclobber -o nounset
 get-qmmander() {
     _IS_VERBOSE=false
     _UPDATE_INSTALLATION=false
-    _QMMANDER_HOME=/opt/qmannder
+    _QMMANDER_HOME=/opt/qmmander
+    _RELEASE=latest
 
     _install_or_update() {
         [ ! -d "${_QMMANDER_HOME}" ] && mkdir "${_QMMANDER_HOME}";
