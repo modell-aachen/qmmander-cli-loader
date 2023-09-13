@@ -3,7 +3,7 @@ Shell script for downloading qmmander-cli from nexus
 
 ## oneliner to install qmmander
 ```
-curl -s -L https://nexus.modac.cloud/repository/qmmander/latest/get-qmmander | NEXUS_BOT_TOKEN=<insert-token> RELEASE=latest sudo -E bash
+sudo -E bash -c ". <(curl -s -L https://nexus.modac.cloud/repository/qmmander/latest/get-qmmander) -u -r latest"
 ```
 
 Pass environment variable RELEASE to specifiy qmmander-version, if nessecary.
