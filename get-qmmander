@@ -35,7 +35,7 @@ get-qmmander() {
             "get-qmmander [OPTIONS]\n"\
             "    -u, --update         updates qmmander cli \n" \
             "    -h, --help           shows this help message\n" \
-            "    -r, --release-tag    cli release tag, e.g. 0.1.12, default: latest\n"
+            "    -r, --release-tag    cli release tag, e.g. q6.7.7, default: latest\n"
         echo -e "$text"
     }
 

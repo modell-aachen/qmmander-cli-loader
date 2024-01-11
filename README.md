@@ -16,7 +16,7 @@ environmental variables NEXUS_BOT_TOKEN and/or RELEASE are unset. Installs qmman
 get-qmmander [OPTIONS]
     -u, --update         updates qmmander cli
     -h, --help           shows this help message
-    -r, --release-tag    cli release tag, e.g. 0.1.12, default: latest
+    -r, --release-tag    cli release tag, e.g. q6.7.7, default: latest
  ```
 ## Local installation
 
